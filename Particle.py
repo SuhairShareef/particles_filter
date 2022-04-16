@@ -1,7 +1,7 @@
 class Particle:
     """A class that represents a particle object used for the particles filter """
 
-    def __init__(self, weight, position=0, direction='f') -> None:
+    def __init__(self, weight, position=0, direction='f', pos=0):
         """This is the constructor
 
         Args:
@@ -13,8 +13,9 @@ class Particle:
         self.weight = weight
         self.position = position
         self.direction = direction
+        self.pos = pos
 
-    def move(self, steps, start, end):
+    def move_particle(self, steps, start, end):
         """ this method moves the particle one step in its derection. If it hits 
             the end or the start of the path, it returns and moves in the other direction
 
@@ -25,18 +26,20 @@ class Particle:
         """
 
         if self.direction == 'f':
-            if self.position + steps >= end:       # change direction
+            if self.position + steps == end:       # change direction
                 self.direction = 'b'
-                self.move(steps, start, end)
+                self.move_particle(steps - 1, start, end)
             else:
                 self.position += steps
 
         else:
-            if self.position - steps <= start:       # change direction
+            if self.position == start:       # change direction
                 self.direction = 'f'
-                self.move(steps, start, end)
+                self.move_particle(steps - 1, start, end)
             else:
                 self.position -= steps
+        
+        self.pos += 1        
 
     def __lt__(self, other):
         return self.weight < other.weight
