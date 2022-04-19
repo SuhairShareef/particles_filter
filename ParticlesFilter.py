@@ -1,8 +1,8 @@
 import random
-from turtle import distance
 from Particle import *
 from matplotlib import pyplot as plt
 from math import *
+import numpy as np
 import string
 
 
@@ -13,16 +13,12 @@ class ParticlesFilter:
         its at is similar to any other particle that has the same letter
     """
 
-    def __init__(self, path_length=100, no_of_particles=50, robot_init_postion=0):
+    def __init__(self, path_length=100, no_of_particles=100, robot_init_postion=0):
         """ The constructor
 
         Args:
             path_length (int): The length of the path for the map. Defaults to 100.
             no_of_particles (int): Defaults to 50.
-            p_hit (float): Used to decrease weight when the sensed data doesn't equal the actual data
-                           Defaults to 0.8.
-            p_miss (float): used to increase weight when the sensed data doesn't equal the actual data
-                           Defaults to 0.6.
             robot_init_postion (int): The initial location of the robot. Defaults to 0.
         """
         self.path_length = path_length
@@ -37,6 +33,14 @@ class ParticlesFilter:
         plt.ion()
         plt.rcParams["figure.figsize"] = [20.00, 3.50]
         plt.rcParams["figure.autolayout"] = True
+    
+    
+    
+    def function_x(theta):
+        """ The used function for the path
+        """
+        return np.cos(theta) + 0.5*np.cos(3*theta+0.23) + 0.5*np.cos(5*theta-0.4) + \
+                0.5*np.cos(7*theta+2.09) + 0.5*np.cos(9*theta-3)
 
 
 
@@ -52,39 +56,20 @@ class ParticlesFilter:
 
 
 
-    def generate_path(self, char_start, char_end):
-        """ Generates the path with random alphabits on each position
-
-        Args:
-            char_start (char): starting range of the desired letters
-            char_end (char): ending range of the desired letters
-        """
-        for i in range(self.path_length // 5):
-            char = self.get_random_char(char_start, char_end)
-            for j in range(5 * i, i * 5 + 5):
-                self.path[j] = char
-    
+    def generate_path(self):
+        self.positions = np.arange(0, 100, 0.001)
+        # the function, which is y=cosθ+1/2*cos(3*θ+0.23) +1/2*cos(5*θ−0.4)+1/2*cos(7*θ+2.09)+1/2*cos(9*θ−3)
+        self.path = np.cos(self.x) + 0.5 * np.cos(3 * self.x + 0.23) + 0.5 * np.cos(5 * self.x -0.4) + 0.5 * np.cos(7 * self.x + 2.09) + 0.5 * np.cos(9 * self.x - 3)
 
     
-    def generate_probability(self):
-        for alpha in self.error_probability:
-            self.error_probability[alpha] = random.uniform(0, 2)  
-        print(self.error_probability)
-
-
-
-    def get_random_char(self, char_1, char_2):
-        rand = random.randint(ord(char_1), ord(char_2))
-        return chr(rand)
-
 
 
     def move(self, steps):
-        self.alpha_counter = dict.fromkeys(string.ascii_lowercase, 0)
         robot_prev_dir = self.robot.direction
         self.robot.move_particle(steps, 0, self.path_length)
         Z = self.path[self.robot.position]
         particle_pos = None
+        distances = []
 
         # to check if the robot changed its direction
         change_direction = (robot_prev_dir != self.robot.direction)
@@ -96,9 +81,7 @@ class ParticlesFilter:
                 else:
                     self.particles[i].direction = 'f'
             
-            distance = abs(self.particles[i].position - self.robot.position)
-            if distance == 0:
-                distance = 1
+            
 
             self.particles[i].move_particle(steps, 0, self.path_length)
             particle_pos = self.path[self.particles[i].position]
@@ -111,8 +94,15 @@ class ParticlesFilter:
             else:
                 self.particles[i].weight *= self.error_probability[particle_pos] 
             
-            self.particles[i].weight /= distance
-
+            self.particles.sort()
+    
+    
+    
+    def update(self):
+        """ Updates weights using gaussian distribution
+        
+        """
+        pass
 
 
     def normalize(self):
@@ -134,7 +124,7 @@ class ParticlesFilter:
 
         for i in range(self.no_of_particles):
             self.particles[i].weight = norm_arr[i] / sum_of_weights
-            ssum += self.particles[i].weight
+            ssum += self.particles[i].weight 
 
 
 
@@ -164,12 +154,12 @@ class ParticlesFilter:
 
         self.particles = new_particles.copy()
         new_particles.clear()
-
+        self.particles.sort()
 
 
     def get_random_index(self, weights):
         # print(weights)
-        N = random.uniform(0, 1)
+        N = random.uniform(min(weights), max(weights))
 
         for index, weight in enumerate(weights):
             if N <= weight:

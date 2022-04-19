@@ -1,7 +1,7 @@
 class Particle:
     """A class that represents a particle object used for the particles filter """
 
-    def __init__(self, weight, position=0, direction='f', pos=0):
+    def __init__(self, weight, position=0, direction='f'):
         """This is the constructor
 
         Args:
@@ -13,7 +13,7 @@ class Particle:
         self.weight = weight
         self.position = position
         self.direction = direction
-        self.pos = pos
+        self.pdf_val = None
 
     def move_particle(self, steps, start, end):
         """ this method moves the particle one step in its derection. If it hits 
