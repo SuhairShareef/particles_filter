@@ -2,9 +2,7 @@ import random
 from Particle import *
 from matplotlib import pyplot as plt
 from math import *
-
 import numpy as np
-import string
 from scipy.stats import norm 
 
 class ParticlesFilter:
@@ -25,11 +23,9 @@ class ParticlesFilter:
         self.path_length = path_length
         self.no_of_particles = no_of_particles
         self.robot = Particle(weight=1, position=robot_init_postion)    # The robot itself is a particle
-        self.error_probability = dict.fromkeys(
-            string.ascii_lowercase, 0)
 
         self.particles = []
-        self.path = [0] * self.path_length
+        self.path = []
 
         plt.ion()
         plt.rcParams["figure.figsize"] = [20.00, 3.50]
@@ -37,7 +33,7 @@ class ParticlesFilter:
     
     
     
-    def function_x(theta):
+    def function_x(self,theta):
         """ The used function for the path
         """
         return np.cos(theta) + 0.5*np.cos(3*theta+0.23) + 0.5*np.cos(5*theta-0.4) + \
@@ -52,24 +48,25 @@ class ParticlesFilter:
         for _ in range(self.no_of_particles):
             w = 1 / self.no_of_particles
             p = random.randint(0, self.path_length - 1)
-            d = 'f' # Rondomizing the direction
-            self.particles.append(Particle(weight=w, position=p, direction=d))
+            """ ran = random.randint(1,980989809)
+            char = 'f'
+            if ran%2:
+                char = 'b'
+            d = char # Rondomizing the direction """
+            self.particles.append(Particle(weight=w, position=p, direction='f'))
 
 
 
     def generate_path(self):
-        self.positions = np.arange(0, 100, 0.001)
+        self.positions = np.arange(0, 10, 0.001)
         # the function, which is y=cosθ+1/2*cos(3*θ+0.23) +1/2*cos(5*θ−0.4)+1/2*cos(7*θ+2.09)+1/2*cos(9*θ−3)
-        self.path = np.cos(self.x) + 0.5 * np.cos(3 * self.x + 0.23) + 0.5 * np.cos(5 * self.x -0.4) + 0.5 * np.cos(7 * self.x + 2.09) + 0.5 * np.cos(9 * self.x - 3)
+        self.path = self.function_x(self.positions)
 
 
 
     def move(self, steps):
         robot_prev_dir = self.robot.direction
-        self.robot.move_particle(steps, 0, self.path_length)
-        Z = self.path[self.robot.position]
-        particle_pos = None
-        distances = []
+        self.robot.move_particle(steps, 0, self.path_length - 1)
 
         # to check if the robot changed its direction
         change_direction = (robot_prev_dir != self.robot.direction)
@@ -80,36 +77,37 @@ class ParticlesFilter:
                     self.particles[i].direction = 'b'
                 else:
                     self.particles[i].direction = 'f'
-            
-            
 
-            self.particles[i].move_particle(steps, 0, self.path_length)
-            particle_pos = self.path[self.particles[i].position]
+            self.particles[i].move_particle(steps, 0, self.path_length-1)
+            # particle_pos = self.function_x(self.particles[i].position)
     
     
     
     def update(self):
         #Updates weights using gaussian distribution
-
         measurements_diffs = [] # differences between particles' measurements and robot's measurement 
 
         for i in range(len(self.particles)):
-            measurements_diffs.append(self.function_x(self.particles[i].position) - self.function_X(self.robot.position))
-        
+            measurements_diffs.append(self.function_x(self.particles[i].position) - self.function_x(self.robot.position))
+       
         ar = np.array(measurements_diffs)
-        
         stdv = ar.std()
+        #print(stdv, measurements_diffs)
+        if stdv <= 0:
+            stdv = 0.0000000000001
 
         # for i in range(len(measurements_diffs)):
         #     measurements_diffs[i] /= stdv
 
         dist = norm(0, stdv) # define a normal distribution with mean = 0 and the calculated standard deviation
         probabilities = [dist.pdf(value) for value in measurements_diffs] # calculate the probability of each particle using pdf
-    
-        # x = np.arrang(measurements_diffs)
-        # plt.plot(x,probablities)
-        # plt.show()
-
+        sums_of_prob = sum(probabilities)
+        
+        for i in range(len(probabilities)):
+            probabilities[i] /= sums_of_prob
+            
+        print("zero=", dist.pdf(0), max(probabilities))
+            
         for i in range(len(self.particles)):
             self.particles[i].weight *= probabilities[i] # update the weights
 
@@ -144,33 +142,26 @@ class ParticlesFilter:
 
         # extract weights
         weights = []
-        for i in range(len(self.particles)):
-            if abs(self.particles[i].position - self.robot.position) < 10:
-                print(self.particles[i])
-                
+        for i in range(len(self.particles)):               
             if not weights:
                 weights.append(self.particles[i].weight)
             else:
                 weights.append(self.particles[i].weight + weights[-1])
         
-        print(min(self.particles).weight, max(self.particles).weight)
-
         for _ in range(self.no_of_particles):
             index = self.get_random_index(weights)
             indexes.append(index)
             particle = Particle(self.particles[index].weight, self.particles[index].position,
-                                self.particles[index].direction, self.particles[index].pos)
+                                self.particles[index].direction)
             new_particles.append(particle)
 
         self.particles = new_particles.copy()
         new_particles.clear()
-        self.particles.sort()
+
 
 
     def get_random_index(self, weights):
-        # print(weights)
         N = random.uniform(min(weights), max(weights))
-
         for index, weight in enumerate(weights):
             if N <= weight:
                 return index
@@ -186,20 +177,29 @@ class ParticlesFilter:
 
 
     def draw(self):
-        positions = [self.particles[i].position for i in range(
+        #fig = plt.figure()
+        plt.ylim(-3, 5)
+        plt.xlim(0, 10)
+        plt.margins(x=1, y=0)
+        plt.grid()
+        #plt.scatter(x, y)
+        plt.xticks(np.arange(10, step=1))
+        plt.plot(self.positions, self.path)
+        
+        positions = [(self.particles[i].position/10) for i in range(
             len(self.particles))]
+        
         y = []
-        for i in range(self.no_of_particles):
-            y.append(random.uniform(0, 0.5))
+        for _ in range(self.no_of_particles):
+            y.append(random.uniform(3, 3.5))
 
-        plt.xlim(0, 100)
-        plt.ylim(0, 2)
         plt.margins(x=1, y=0)
         plt.scatter(positions, y, marker="o")
-        plt.plot([self.robot.position], [0.5], marker="o", markersize=10,
+        
+        plt.plot([self.robot.position / 10], [3], marker="o", markersize=10,
                  markeredgecolor="green", markerfacecolor="red")
-        plt.xticks([i for i in range(self.path_length)], self.path)
 
+        plt.show()
         plt.draw()
-        plt.pause(0.0001)
+        plt.pause(0.5)
         plt.clf()

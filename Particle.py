@@ -26,20 +26,19 @@ class Particle:
         """
 
         if self.direction == 'f':
-            if self.position + steps == end:       # change direction
+            if self.position + steps >= end:       # change direction
                 self.direction = 'b'
                 self.move_particle(steps - 1, start, end)
             else:
                 self.position += steps
 
         else:
-            if self.position == start:       # change direction
+            if self.position <= start:       # change direction
                 self.direction = 'f'
-                self.move_particle(steps - 1, start, end)
+                self.move_particle(steps + 1, start, end)
             else:
                 self.position -= steps
-        
-        self.pos += 1        
+                
 
     def __lt__(self, other):
         return self.weight < other.weight
