@@ -2,9 +2,10 @@ import random
 from Particle import *
 from matplotlib import pyplot as plt
 from math import *
+
 import numpy as np
 import string
-
+from scipy.stats import norm 
 
 class ParticlesFilter:
     """ A class that represents a particle filter applied on a robot with 1D movement
@@ -61,7 +62,6 @@ class ParticlesFilter:
         # the function, which is y=cosθ+1/2*cos(3*θ+0.23) +1/2*cos(5*θ−0.4)+1/2*cos(7*θ+2.09)+1/2*cos(9*θ−3)
         self.path = np.cos(self.x) + 0.5 * np.cos(3 * self.x + 0.23) + 0.5 * np.cos(5 * self.x -0.4) + 0.5 * np.cos(7 * self.x + 2.09) + 0.5 * np.cos(9 * self.x - 3)
 
-    
 
 
     def move(self, steps):
@@ -85,24 +85,34 @@ class ParticlesFilter:
 
             self.particles[i].move_particle(steps, 0, self.path_length)
             particle_pos = self.path[self.particles[i].position]
-
-            hit = (Z == particle_pos)
-
-            # if hit or miss
-            if hit:
-                self.particles[i].weight *= (1 - self.error_probability[Z]) 
-            else:
-                self.particles[i].weight *= self.error_probability[particle_pos] 
-            
-            self.particles.sort()
     
     
     
     def update(self):
-        """ Updates weights using gaussian distribution
+        #Updates weights using gaussian distribution
+
+        measurements_diffs = [] # differences between particles' measurements and robot's measurement 
+
+        for i in range(len(self.particles)):
+            measurements_diffs.append(self.function_x(self.particles[i].position) - self.function_X(self.robot.position))
         
-        """
-        pass
+        ar = np.array(measurements_diffs)
+        
+        stdv = ar.std()
+
+        # for i in range(len(measurements_diffs)):
+        #     measurements_diffs[i] /= stdv
+
+        dist = norm(0, stdv) # define a normal distribution with mean = 0 and the calculated standard deviation
+        probabilities = [dist.pdf(value) for value in measurements_diffs] # calculate the probability of each particle using pdf
+    
+        # x = np.arrang(measurements_diffs)
+        # plt.plot(x,probablities)
+        # plt.show()
+
+        for i in range(len(self.particles)):
+            self.particles[i].weight *= probabilities[i] # update the weights
+
 
 
     def normalize(self):

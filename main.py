@@ -3,8 +3,6 @@ from ParticlesFilter import *
 if __name__ == "__main__":
     
     pf = ParticlesFilter()
-    pf.generate_probability()
-    pf.generate_path('a', 'z')
     pf.generate_random_particles()
     #print(pf.path)
     
@@ -16,6 +14,7 @@ if __name__ == "__main__":
         pf.move(1)
         pf.normalize()
         pf.sample()
+        pf.update()
         pf.normalize()
         pf.draw()
         #print(pf.particles[0].pos)
