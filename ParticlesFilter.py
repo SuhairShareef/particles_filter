@@ -12,7 +12,7 @@ class ParticlesFilter:
         its at is similar to any other particle that has the same letter
     """
 
-    def __init__(self, path_length=100, no_of_particles=100, robot_init_postion=0):
+    def __init__(self, path_length=100, no_of_particles=500, robot_init_postion=50):
         """ The constructor
 
         Args:
@@ -102,11 +102,11 @@ class ParticlesFilter:
         dist = norm(0, stdv) # define a normal distribution with mean = 0 and the calculated standard deviation
         probabilities = [dist.pdf(value) for value in measurements_diffs] # calculate the probability of each particle using pdf
         sums_of_prob = sum(probabilities)
-        
+        print(sums_of_prob)
         for i in range(len(probabilities)):
             probabilities[i] /= sums_of_prob
             
-        print("zero=", dist.pdf(0), max(probabilities))
+        #print("zero=", dist.pdf(0), max(probabilities))
             
         for i in range(len(self.particles)):
             self.particles[i].weight *= probabilities[i] # update the weights
@@ -121,19 +121,12 @@ class ParticlesFilter:
         diff_arr = max_val - min_val
 
         for i in range(len(self.particles)):
-            temp = 1.e-10
-            if diff_arr != 0:
-                temp = (self.particles[i].weight - min_val) / diff_arr
-
-            norm_arr.append(temp)
+            norm_arr.append(self.particles[i].weight)
 
         sum_of_weights = sum(norm_arr)
-        ssum = 0
-
+        
         for i in range(self.no_of_particles):
             self.particles[i].weight = norm_arr[i] / sum_of_weights
-            ssum += self.particles[i].weight 
-
 
 
     def sample(self):
@@ -150,6 +143,8 @@ class ParticlesFilter:
         
         for _ in range(self.no_of_particles):
             index = self.get_random_index(weights)
+            if not index:
+                index = self.particles.index(max(self.particles))
             indexes.append(index)
             particle = Particle(self.particles[index].weight, self.particles[index].position,
                                 self.particles[index].direction)
@@ -191,7 +186,7 @@ class ParticlesFilter:
         
         y = []
         for _ in range(self.no_of_particles):
-            y.append(random.uniform(3, 3.5))
+            y.append(random.uniform(3, 4))
 
         plt.margins(x=1, y=0)
         plt.scatter(positions, y, marker="o")

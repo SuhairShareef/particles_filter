@@ -12,6 +12,7 @@
 
 
 from ParticlesFilter import *
+#import keyboard
 
 if __name__ == "__main__":
     
@@ -29,5 +30,8 @@ if __name__ == "__main__":
         pf.sample()
         pf.normalize()
         pf.draw()
+        """ if keyboard.is_pressed('q'):  # if key 'q' is pressed 
+            print('exit')
+            break """
     
     print("The number of steps it took me to find my position is: ", no_of_steps, "I'm at position: ", pf.robot.position)
