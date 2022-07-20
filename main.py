@@ -1,16 +1,3 @@
-# Palestine Polytechnic University
-# College of IT & Computer Engineering
-# Intellgent Systems Project: Particle Filter
-#-------------------------------------------------------------------------#
-# Done by:
-#   Name: Suhair Shareef
-#   ID  : 171055
-#       &&
-#   Name: Sarah Al-Sharif
-#   ID  : 197163
-#-------------------------------------------------------------------------#
-
-
 from ParticlesFilter import *
 #import keyboard
 
